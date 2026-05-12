@@ -166,13 +166,15 @@ class App {
           </div>
 
           ${step === 1 ? `
-            <h1 class="animate-in" style="margin-bottom: 16px">Welcome to ProgressPact</h1>
-            <p class="animate-in" style="color: var(--text-muted); margin-bottom: 40px">Let's personalize your learning experience. First, what's your name?</p>
-            <input type="text" id="ob-name-input" placeholder="Enter your name" class="card" style="width: 100%; padding: 20px; border-radius: 20px; margin-bottom: 32px; font-size: 20px; text-align: center; border-width: 2px" value="${this.state.user.name}">
+            <div style="font-size: 64px; margin-bottom: 24px">👋</div>
+            <h1 class="animate-in" style="font-size: 40px; margin-bottom: 16px; letter-spacing: -0.04em">Welcome to ProgressPact</h1>
+            <p class="animate-in" style="color: var(--text-muted); margin-bottom: 48px; font-size: 18px">Your journey to mastery starts here. Let's personalize your path. What should we call you?</p>
+            <input type="text" id="ob-name-input" placeholder="Your first name" class="card" style="width: 100%; padding: 24px; border-radius: 24px; margin-bottom: 40px; font-size: 24px; text-align: center; border-width: 2px; font-weight: 700; border-color: var(--primary)" value="${this.state.user.name}">
           ` : step === 2 ? `
-            <h1 class="animate-in" style="margin-bottom: 16px">What are you learning?</h1>
-            <p class="animate-in" style="color: var(--text-muted); margin-bottom: 40px">Select the domains you want to master.</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px">
+            <div style="font-size: 64px; margin-bottom: 24px">🎯</div>
+            <h1 class="animate-in" style="font-size: 40px; margin-bottom: 16px; letter-spacing: -0.04em">Pick your Domain</h1>
+            <p class="animate-in" style="color: var(--text-muted); margin-bottom: 48px; font-size: 18px">We'll tailor your dashboard to your interests.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px">
               ${['Web Dev', 'AI/ML', 'Design', 'Marketing'].map(cat => `
                 <div class="card ob-category" data-cat="${cat}" style="padding: 24px; cursor: pointer; border-width: 2px; border-color: ${cat === 'Web Dev' ? 'var(--primary)' : 'var(--border)'}; background: ${cat === 'Web Dev' ? 'var(--primary-light)' : 'white'}">
                   <div style="font-weight: 800; font-size: 16px">${cat}</div>
@@ -293,17 +295,20 @@ class App {
   // Principle 1 & 6: Hierarchy & Proximity
   private renderDashboard(el: HTMLElement) {
     el.innerHTML = `
-      <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 56px">
-        <div>
-          <h1 style="margin-bottom: 8px">Welcome back, ${this.state.user.name}</h1>
-          <p style="color: var(--text-muted); font-size: 18px; font-weight: 500">You've completed 4 lectures this week. You're on fire! 🔥</p>
-        </div>
-        <div style="display: flex; gap: 16px">
-           <button class="btn btn-secondary" id="dash-schedule" aria-label="View study schedule">📅 Schedule</button>
-           <button class="btn" id="dash-resume" aria-label="Resume last course">🚀 Resume Learning</button>
+      <header style="margin-bottom: 64px">
+        <!-- Anchor Object: Large, bold greeting -->
+        <h1 style="font-size: 48px; letter-spacing: -0.04em; margin-bottom: 12px">Hey ${this.state.user.name}, ready to <span style="color: var(--primary)">level up?</span></h1>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <p style="color: var(--text-muted); font-size: 20px; font-weight: 500">You're just 2 lectures away from your weekly goal.</p>
+          <div style="display: flex; gap: 20px">
+             <!-- Fitts's Law: Prominent, high-contrast buttons -->
+             <button class="btn btn-secondary" id="dash-schedule">📅 My Schedule</button>
+             <button class="btn" id="dash-resume">🚀 Resume Learning</button>
+          </div>
         </div>
       </header>
 
+      <!-- Modularity: Distinct blocks for different types of info -->
       <section style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-bottom: 64px" aria-label="Quick Stats">
         <div class="card stat-card" style="border-bottom: 4px solid #F59E0B">
           <div class="stat-value" style="color: #D97706">${this.state.user.xp.toLocaleString()}</div>
