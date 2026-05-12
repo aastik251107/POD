@@ -386,7 +386,7 @@ class App {
     el.innerHTML = `
       <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 56px">
         <h1>My Learning Path</h1>
-        <button class="btn">+ Explore More</button>
+        <button class="btn" id="explore-more-btn">+ Explore More</button>
       </header>
       
       <div class="grid">
@@ -412,6 +412,25 @@ class App {
         `).join('')}
       </div>
     `;
+
+    el.querySelector('#explore-more-btn')?.addEventListener('click', () => {
+      const newCourse = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: 'New Mastery Course',
+        instructor: 'Industry Expert',
+        progress: 0,
+        totalLectures: 50,
+        completedLectures: 0,
+        streak: 0,
+        color: '#8B5CF6',
+        icon: '🚀',
+        category: 'Personal Growth'
+      };
+      this.state.courses.push(newCourse);
+      Store.save(this.state);
+      this.render();
+      alert('New course added to your path!');
+    });
   }
 
   private renderLeaderboard(el: HTMLElement) {
