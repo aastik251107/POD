@@ -1,7 +1,7 @@
 import './style.css';
 
 // --- Types ---
-type Screen = 'onboarding' | 'dashboard' | 'courses' | 'leaderboard' | 'achievements' | 'ai-coach' | 'schedule' | 'course-detail';
+type Screen = 'onboarding' | 'dashboard' | 'courses' | 'leaderboard' | 'achievements' | 'ai-coach' | 'schedule' | 'course-detail' | 'groups';
 
 interface AppState {
   hasCompletedOnboarding: boolean;
@@ -25,6 +25,16 @@ interface AppState {
     color: string;
     icon: string;
     category: string;
+  }>;
+  selectedCourseId: string | null;
+  groups: Array<{
+    id: string;
+    name: string;
+    members: number;
+    activity: string;
+    rank: string;
+    icon: string;
+    color: string;
   }>;
 }
 
@@ -54,6 +64,7 @@ class Store {
         avatar: 'A',
         level: 12
       },
+      selectedCourseId: '1',
       courses: [
         {
           id: '1',
@@ -91,6 +102,10 @@ class Store {
           icon: '🎨',
           category: 'UI/UX Design'
         }
+      ],
+      groups: [
+        { id: 'g1', name: 'React Wizards', members: 42, activity: '3 mins ago', rank: 'Top 1%', icon: '⚛️', color: '#0D9488' },
+        { id: 'g2', name: 'UI/UX Collective', members: 128, activity: '12 mins ago', rank: 'Top 5%', icon: '🎨', color: '#F43F5E' }
       ]
     };
   }
@@ -111,6 +126,12 @@ class App {
 
   private init() {
     this.render();
+  }
+
+  public handleCourseClick(id: string) {
+    this.state.selectedCourseId = id;
+    Store.save(this.state);
+    this.navigate('course-detail');
   }
 
   public navigate(screen: Screen) {
@@ -282,7 +303,7 @@ class App {
       </div>
     `;
 
-    ['dashboard', 'courses', 'leaderboard', 'achievements', 'ai-coach'].forEach(id => {
+    ['dashboard', 'courses', 'leaderboard', 'achievements', 'groups', 'ai-coach'].forEach(id => {
       el.querySelector(`#nav-${id}`)?.addEventListener('click', () => this.navigate(id as Screen));
     });
 
@@ -394,14 +415,14 @@ class App {
       
       <div class="grid">
         ${this.state.courses.map(course => `
-          <div class="card" style="padding: 0; overflow: hidden; cursor: pointer; position: relative">
+          <div class="card" style="padding: 0; overflow: hidden; cursor: pointer; position: relative" onclick="window.app.handleCourseClick('${course.id}')">
             <!-- Delete Button (Contrast & Emphasis) -->
             <button class="btn-delete" data-id="${course.id}" style="position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.9); border: 1px solid #FECACA; color: #F43F5E; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 10; cursor: pointer; transition: all 0.2s" title="Delete Course">×</button>
             
-            <div style="height: 180px; background: ${course.color}15; display: flex; align-items: center; justify-content: center; font-size: 72px" onclick="window.app.navigate('course-detail')">
+            <div style="height: 180px; background: ${course.color}15; display: flex; align-items: center; justify-content: center; font-size: 72px">
               ${course.icon}
             </div>
-            <div style="padding: 32px" onclick="window.app.navigate('course-detail')">
+            <div style="padding: 32px">
               <div style="font-size: 12px; font-weight: 900; color: ${course.color}; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.1em">${course.category}</div>
               <h2 style="font-size: 22px; margin-bottom: 8px">${course.title}</h2>
               <p style="color: var(--text-light); font-size: 14px; margin-bottom: 32px; font-weight: 600">${course.instructor} · ${course.totalLectures} lectures</p>
@@ -634,87 +655,136 @@ class App {
 
   private renderGroups(el: HTMLElement) {
     el.innerHTML = `
-      <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 56px">
-        <div>
-          <h1 style="margin-bottom: 8px">Peer Groups</h1>
-          <p style="color: var(--text-muted); font-size: 18px; font-weight: 500">Collaborate with fellow learners and climb the ranks together.</p>
-        </div>
-        <button class="btn">+ Create Group</button>
-      </header>
+      <div style="max-width: 600px; margin: 0 auto; padding-bottom: 80px">
+        <header style="margin-bottom: 40px">
+          <h1 style="font-size: 34px; font-weight: 800; letter-spacing: -0.04em">Study Groups</h1>
+        </header>
 
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px">
-        <section>
-          <div style="margin-bottom: 40px">
-            <h2 style="margin-bottom: 24px">My Groups</h2>
-            <div style="display: flex; flex-direction: column; gap: 16px">
-              ${[
-                { name: 'React Wizards', members: 42, activity: '3 mins ago', rank: 'Top 1%', icon: '⚛️', color: '#61DAFB' },
-                { name: 'UI/UX Collective', members: 128, activity: '12 mins ago', rank: 'Top 5%', icon: '🎨', color: '#F43F5E' },
-                { name: 'Machine Learning Cohort', members: 15, activity: '1 hour ago', rank: 'Top 2%', icon: '🤖', color: '#8B5CF6' }
-              ].map(group => `
-                <div class="card" style="padding: 24px; flex-direction: row; align-items: center; gap: 24px; cursor: pointer">
-                  <div style="width: 64px; height: 64px; border-radius: 16px; background: ${group.color}15; display: flex; align-items: center; justify-content: center; font-size: 32px">
-                    ${group.icon}
-                  </div>
-                  <div style="flex: 1">
-                    <h3 style="margin-bottom: 4px">${group.name}</h3>
-                    <p style="color: var(--text-light); font-size: 14px; font-weight: 600">${group.members} active members · Last active ${group.activity}</p>
-                  </div>
-                  <div style="text-align: right">
-                    <div style="font-size: 12px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 4px">${group.rank}</div>
-                    <button style="color: var(--text-muted); font-weight: 700; background: transparent; border: none; font-size: 14px">View Chat →</button>
-                  </div>
-                </div>
-              `).join('')}
+        <section style="margin-bottom: 48px">
+          <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 24px">My Groups</h2>
+          <div style="background: #E6FFFA; border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 32px">
+            <div style="font-size: 32px; background: white; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05)">⚛️</div>
+            <div style="flex: 1">
+              <div style="font-weight: 800; font-size: 17px; color: #1A202C">React Dev Cohort #12</div>
+              <div style="font-size: 13px; color: #718096; font-weight: 600">8 members · 3 online now</div>
             </div>
+            <span style="background: #0D9488; color: white; padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 800">Joined</span>
           </div>
 
-          <div>
-            <h2 style="margin-bottom: 24px">Explore Cohorts</h2>
-            <div class="grid" style="grid-template-columns: 1fr 1fr">
-              <div class="card" style="padding: 32px; border-style: dashed; border-color: var(--border); background: transparent; align-items: center; justify-content: center; text-align: center">
-                <div style="font-size: 40px; margin-bottom: 16px">🔍</div>
-                <h3 style="margin-bottom: 8px">Find New Peers</h3>
-                <p style="color: var(--text-light); font-size: 14px; margin-bottom: 24px">Search for groups by domain or course.</p>
-                <button class="btn btn-secondary">Search Groups</button>
+          <div class="card" style="padding: 0; overflow: hidden; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05)">
+            <div style="padding: 16px 20px; border-bottom: 1px solid #EDF2F7; display: flex; align-items: center; gap: 10px">
+              <span style="font-size: 18px">💬</span>
+              <span style="font-weight: 800; font-size: 15px; color: #2D3748">Group Chat</span>
+            </div>
+            
+            <div id="group-chat-window" style="height: 320px; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+              <div style="align-self: flex-start; max-width: 85%">
+                <div style="font-size: 11px; color: #A0AEC0; font-weight: 700; margin-left: 4px; margin-bottom: 4px">Arjun</div>
+                <div style="background: #F7FAFC; border: 1.5px solid #EDF2F7; padding: 12px 18px; border-radius: 18px; border-bottom-left-radius: 4px; font-size: 15px; font-weight: 600; color: #2D3748">bro did you finish hooks section?</div>
               </div>
-              <div class="card" style="padding: 32px; background: var(--primary-light); border-color: var(--primary); align-items: center; justify-content: center; text-align: center">
-                <div style="font-size: 40px; margin-bottom: 16px">🌟</div>
-                <h3 style="color: var(--primary); margin-bottom: 8px">Suggested for You</h3>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px">Based on your "Web Dev" interest.</p>
-                <button class="btn">Join "Next.js Pro"</button>
+              
+              <div style="align-self: flex-end; max-width: 85%">
+                <div style="background: #0D9488; color: white; padding: 12px 18px; border-radius: 18px; border-bottom-right-radius: 4px; font-size: 15px; font-weight: 600">yeah! useEffect cleanup is key 🔥</div>
               </div>
+
+              <div style="align-self: flex-start; max-width: 85%">
+                <div style="font-size: 11px; color: #A0AEC0; font-weight: 700; margin-left: 4px; margin-bottom: 4px">Parv</div>
+                <div style="background: #F7FAFC; border: 1.5px solid #EDF2F7; padding: 12px 18px; border-radius: 18px; border-bottom-left-radius: 4px; font-size: 15px; font-weight: 600; color: #2D3748">I'm on lesson 40 now</div>
+              </div>
+
+              <div style="align-self: flex-end; max-width: 85%">
+                <div style="background: #0D9488; color: white; padding: 12px 18px; border-radius: 18px; border-bottom-right-radius: 4px; font-size: 15px; font-weight: 600">let's do a sync call sunday?</div>
+              </div>
+            </div>
+
+            <div style="padding: 20px; border-top: 1px solid #EDF2F7; display: flex; gap: 12px">
+              <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; padding: 14px 20px; border-radius: 14px; border: 1.5px solid #E2E8F0; font-family: inherit; font-size: 15px; outline: none">
+              <button id="send-chat-btn" style="background: #0D9488; color: white; border: none; width: 48px; height: 48px; border-radius: 14px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center">↑</button>
             </div>
           </div>
         </section>
 
-        <aside>
-          <div class="card" style="padding: 32px; position: sticky; top: 48px">
-            <h2 style="margin-bottom: 24px">Live Discussions</h2>
-            <div style="display: flex; flex-direction: column; gap: 24px">
-              ${[
-                { user: 'Siddharth', group: 'React Wizards', text: 'Anyone figured out the middleware issue?', time: '2m' },
-                { user: 'Ananya', group: 'UI/UX Collective', text: 'The new design tokens are live!', time: '5m' },
-                { user: 'Rahul', group: 'React Wizards', text: 'Check out this docs link.', time: '12m' }
-              ].map(chat => `
-                <div style="display: flex; gap: 16px">
-                  <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">${chat.user[0]}</div>
-                  <div style="flex: 1">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px">
-                      <span style="font-weight: 800; font-size: 14px">${chat.user}</span>
-                      <span style="color: var(--text-light); font-size: 11px">${chat.time}</span>
-                    </div>
-                    <div style="font-size: 11px; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 4px">${chat.group}</div>
-                    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4">${chat.text}</p>
-                  </div>
+        <section>
+          <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 24px">Discover Groups</h2>
+          <div style="display: flex; flex-direction: column; gap: 20px">
+            ${[
+              { name: 'ML Beginners July', members: 12, online: 5, icon: '🤖', color: '#6366F1' },
+              { name: 'UX Practitioners', members: 6, online: 2, icon: '🎨', color: '#F43F5E' }
+            ].map(group => `
+              <div style="display: flex; align-items: center; gap: 20px; padding: 16px 0; border-bottom: 1px solid #EDF2F7">
+                <div style="font-size: 32px">${group.icon}</div>
+                <div style="flex: 1">
+                  <div style="font-weight: 800; font-size: 16px; color: #2D3748">${group.name}</div>
+                  <div style="font-size: 13px; color: #718096; font-weight: 600">${group.members} members · ${group.online} online</div>
                 </div>
-              `).join('')}
-            </div>
-            <button class="btn btn-secondary" style="width: 100%; margin-top: 32px">Open All Chats</button>
+                <button class="btn btn-secondary join-group-btn" data-name="${group.name}" data-icon="${group.icon}" data-color="${group.color}" style="border-radius: 12px; padding: 10px 24px; border-width: 2px">Join</button>
+              </div>
+            `).join('')}
           </div>
-        </aside>
+        </section>
+
+        <button class="btn btn-secondary" id="create-group-btn" style="width: 100%; margin-top: 48px; padding: 20px; border-radius: 18px; font-size: 17px; border-width: 2px">+ Create New Group</button>
       </div>
     `;
+
+    // Re-attach listeners
+    const chatWindow = el.querySelector('#group-chat-window') as HTMLElement;
+    const chatInput = el.querySelector('#chat-input') as HTMLInputElement;
+    const sendBtn = el.querySelector('#send-chat-btn');
+
+    const sendMessage = () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      const bubble = document.createElement('div');
+      bubble.style.alignSelf = 'flex-end';
+      bubble.style.maxWidth = '85%';
+      bubble.innerHTML = `<div style="background: #0D9488; color: white; padding: 12px 18px; border-radius: 18px; border-bottom-right-radius: 4px; font-size: 15px; font-weight: 600">${text}</div>`;
+      chatWindow.appendChild(bubble);
+      chatInput.value = '';
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    };
+
+    sendBtn?.addEventListener('click', sendMessage);
+    chatInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    el.querySelectorAll('.join-group-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const { name, icon, color } = (btn as HTMLElement).dataset;
+        if (this.state.groups.some(g => g.name === name)) {
+          alert("You're already in this group!");
+          return;
+        }
+        this.state.groups.push({
+          id: Math.random().toString(36).substr(2, 9),
+          name: name!,
+          icon: icon!,
+          color: color!,
+          members: Math.floor(Math.random() * 20) + 5,
+          activity: 'Just now',
+          rank: 'Member'
+        });
+        Store.save(this.state);
+        this.render();
+        alert(`Successfully joined ${name}! 🚀`);
+      });
+    });
+
+    el.querySelector('#create-group-btn')?.addEventListener('click', () => {
+      const name = prompt("Enter a name for your new study group:");
+      if (!name) return;
+      this.state.groups.push({
+        id: Math.random().toString(36).substr(2, 9),
+        name,
+        icon: '🚀',
+        color: '#10B981',
+        members: 1,
+        activity: 'Just now',
+        rank: 'Founder'
+      });
+      Store.save(this.state);
+      this.render();
+      alert(`Group "${name}" created successfully!`);
+    });
   }
 
   private renderAICoach(el: HTMLElement) {
@@ -878,7 +948,7 @@ class App {
   }
 
   private renderCourseDetail(el: HTMLElement) {
-    const course = this.state.courses[0];
+    const course = this.state.courses.find(c => c.id === this.state.selectedCourseId) || this.state.courses[0];
     el.innerHTML = `
       <header style="display: flex; align-items: center; gap: 24px; margin-bottom: 56px">
         <button class="btn btn-secondary" style="padding: 14px 28px" id="detail-back">← Dashboard</button>
