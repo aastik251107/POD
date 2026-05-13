@@ -143,6 +143,7 @@ class App {
       case 'courses': this.renderCourses(main); break;
       case 'leaderboard': this.renderLeaderboard(main); break;
       case 'achievements': this.renderAchievements(main); break;
+      case 'groups': this.renderGroups(main); break;
       case 'ai-coach': this.renderAICoach(main); break;
       case 'schedule': this.renderSchedule(main); break;
       case 'course-detail': this.renderCourseDetail(main); break;
@@ -259,6 +260,7 @@ class App {
           { id: 'courses', icon: '📚', label: 'My Courses' },
           { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
           { id: 'achievements', icon: '🎖️', label: 'Achievements' },
+          { id: 'groups', icon: '👥', label: 'Peer Groups' },
           { id: 'ai-coach', icon: '🤖', label: 'AI Coach' }
         ].map(item => `
           <button class="nav-link ${this.currentScreen === item.id ? 'active' : ''}" id="nav-${item.id}" aria-current="${this.currentScreen === item.id ? 'page' : 'false'}" style="border: none; background: transparent; width: 100%; text-align: left; cursor: pointer">
@@ -368,7 +370,7 @@ class App {
                 <p style="font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px">
                   Arjun is just **160 XP** ahead. Completing "Hooks: useEffect" today will push you into the top 4 learners. 
                 </p>
-                <button class="btn" style="width: 100%; font-size: 15px">Let's Study</button>
+                <button class="btn" id="ai-lets-study" style="width: 100%; font-size: 15px">Let's Study</button>
               </div>
             </div>
           </div>
@@ -379,6 +381,7 @@ class App {
     el.querySelector('#view-courses')?.addEventListener('click', () => this.navigate('courses'));
     el.querySelector('#dash-schedule')?.addEventListener('click', () => this.navigate('schedule'));
     el.querySelector('#dash-resume')?.addEventListener('click', () => this.navigate('course-detail'));
+    el.querySelector('#ai-lets-study')?.addEventListener('click', () => this.navigate('course-detail'));
   }
 
   // Principle 3 & 7: Consistency & Alignment
@@ -391,11 +394,14 @@ class App {
       
       <div class="grid">
         ${this.state.courses.map(course => `
-          <div class="card" style="padding: 0; overflow: hidden; cursor: pointer" onclick="window.app.navigate('course-detail')">
-            <div style="height: 180px; background: ${course.color}15; display: flex; align-items: center; justify-content: center; font-size: 72px">
+          <div class="card" style="padding: 0; overflow: hidden; cursor: pointer; position: relative">
+            <!-- Delete Button (Contrast & Emphasis) -->
+            <button class="btn-delete" data-id="${course.id}" style="position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.9); border: 1px solid #FECACA; color: #F43F5E; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 10; cursor: pointer; transition: all 0.2s" title="Delete Course">×</button>
+            
+            <div style="height: 180px; background: ${course.color}15; display: flex; align-items: center; justify-content: center; font-size: 72px" onclick="window.app.navigate('course-detail')">
               ${course.icon}
             </div>
-            <div style="padding: 32px">
+            <div style="padding: 32px" onclick="window.app.navigate('course-detail')">
               <div style="font-size: 12px; font-weight: 900; color: ${course.color}; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.1em">${course.category}</div>
               <h2 style="font-size: 22px; margin-bottom: 8px">${course.title}</h2>
               <p style="color: var(--text-light); font-size: 14px; margin-bottom: 32px; font-weight: 600">${course.instructor} · ${course.totalLectures} lectures</p>
@@ -414,22 +420,64 @@ class App {
     `;
 
     el.querySelector('#explore-more-btn')?.addEventListener('click', () => {
+      const url = prompt("Enter a course URL (Udemy, Coursera, or YouTube) to import:");
+      if (!url) return;
+
+      let title = "Imported Course";
+      let instructor = "Online Instructor";
+      let color = "#8B5CF6";
+      let icon = "🌐";
+      let category = "Self-Study";
+
+      if (url.includes('udemy')) {
+        title = "Udemy Mastery Class";
+        instructor = "Top Rated Instructor";
+        color = "#A435F0";
+        icon = "🎓";
+        category = "Premium Course";
+      } else if (url.includes('coursera')) {
+        title = "Coursera Specialization";
+        instructor = "University Professor";
+        color = "#0056D2";
+        icon = "🏛️";
+        category = "Academic";
+      } else if (url.includes('youtube')) {
+        title = "YouTube Learning Series";
+        instructor = "Content Creator";
+        color = "#FF0000";
+        icon = "📺";
+        category = "Public Domain";
+      }
+
       const newCourse = {
         id: Math.random().toString(36).substr(2, 9),
-        title: 'New Mastery Course',
-        instructor: 'Industry Expert',
+        title,
+        instructor,
         progress: 0,
-        totalLectures: 50,
+        totalLectures: 24,
         completedLectures: 0,
         streak: 0,
-        color: '#8B5CF6',
-        icon: '🚀',
-        category: 'Personal Growth'
+        color,
+        icon,
+        category
       };
+
       this.state.courses.push(newCourse);
       Store.save(this.state);
       this.render();
-      alert('New course added to your path!');
+      alert(`Successfully imported "${title}" from ${new URL(url).hostname}!`);
+    });
+
+    el.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.id;
+        if (confirm('Are you sure you want to remove this course?')) {
+          this.state.courses = this.state.courses.filter(c => c.id !== id);
+          Store.save(this.state);
+          this.render();
+        }
+      });
     });
   }
 
@@ -584,6 +632,91 @@ class App {
     }, 1200);
   }
 
+  private renderGroups(el: HTMLElement) {
+    el.innerHTML = `
+      <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 56px">
+        <div>
+          <h1 style="margin-bottom: 8px">Peer Groups</h1>
+          <p style="color: var(--text-muted); font-size: 18px; font-weight: 500">Collaborate with fellow learners and climb the ranks together.</p>
+        </div>
+        <button class="btn">+ Create Group</button>
+      </header>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px">
+        <section>
+          <div style="margin-bottom: 40px">
+            <h2 style="margin-bottom: 24px">My Groups</h2>
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              ${[
+                { name: 'React Wizards', members: 42, activity: '3 mins ago', rank: 'Top 1%', icon: '⚛️', color: '#61DAFB' },
+                { name: 'UI/UX Collective', members: 128, activity: '12 mins ago', rank: 'Top 5%', icon: '🎨', color: '#F43F5E' },
+                { name: 'Machine Learning Cohort', members: 15, activity: '1 hour ago', rank: 'Top 2%', icon: '🤖', color: '#8B5CF6' }
+              ].map(group => `
+                <div class="card" style="padding: 24px; flex-direction: row; align-items: center; gap: 24px; cursor: pointer">
+                  <div style="width: 64px; height: 64px; border-radius: 16px; background: ${group.color}15; display: flex; align-items: center; justify-content: center; font-size: 32px">
+                    ${group.icon}
+                  </div>
+                  <div style="flex: 1">
+                    <h3 style="margin-bottom: 4px">${group.name}</h3>
+                    <p style="color: var(--text-light); font-size: 14px; font-weight: 600">${group.members} active members · Last active ${group.activity}</p>
+                  </div>
+                  <div style="text-align: right">
+                    <div style="font-size: 12px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 4px">${group.rank}</div>
+                    <button style="color: var(--text-muted); font-weight: 700; background: transparent; border: none; font-size: 14px">View Chat →</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <h2 style="margin-bottom: 24px">Explore Cohorts</h2>
+            <div class="grid" style="grid-template-columns: 1fr 1fr">
+              <div class="card" style="padding: 32px; border-style: dashed; border-color: var(--border); background: transparent; align-items: center; justify-content: center; text-align: center">
+                <div style="font-size: 40px; margin-bottom: 16px">🔍</div>
+                <h3 style="margin-bottom: 8px">Find New Peers</h3>
+                <p style="color: var(--text-light); font-size: 14px; margin-bottom: 24px">Search for groups by domain or course.</p>
+                <button class="btn btn-secondary">Search Groups</button>
+              </div>
+              <div class="card" style="padding: 32px; background: var(--primary-light); border-color: var(--primary); align-items: center; justify-content: center; text-align: center">
+                <div style="font-size: 40px; margin-bottom: 16px">🌟</div>
+                <h3 style="color: var(--primary); margin-bottom: 8px">Suggested for You</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px">Based on your "Web Dev" interest.</p>
+                <button class="btn">Join "Next.js Pro"</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside>
+          <div class="card" style="padding: 32px; position: sticky; top: 48px">
+            <h2 style="margin-bottom: 24px">Live Discussions</h2>
+            <div style="display: flex; flex-direction: column; gap: 24px">
+              ${[
+                { user: 'Siddharth', group: 'React Wizards', text: 'Anyone figured out the middleware issue?', time: '2m' },
+                { user: 'Ananya', group: 'UI/UX Collective', text: 'The new design tokens are live!', time: '5m' },
+                { user: 'Rahul', group: 'React Wizards', text: 'Check out this docs link.', time: '12m' }
+              ].map(chat => `
+                <div style="display: flex; gap: 16px">
+                  <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">${chat.user[0]}</div>
+                  <div style="flex: 1">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px">
+                      <span style="font-weight: 800; font-size: 14px">${chat.user}</span>
+                      <span style="color: var(--text-light); font-size: 11px">${chat.time}</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 4px">${chat.group}</div>
+                    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4">${chat.text}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <button class="btn btn-secondary" style="width: 100%; margin-top: 32px">Open All Chats</button>
+          </div>
+        </aside>
+      </div>
+    `;
+  }
+
   private renderAICoach(el: HTMLElement) {
     el.innerHTML = `
       <div style="display: flex; flex-direction: column; height: calc(100vh - 96px)">
@@ -660,18 +793,20 @@ class App {
         <section class="card" style="padding: 40px">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px">
             <h3>Weekly Planner</h3>
-            <button class="btn" style="padding: 12px 24px; font-size: 14px">Manage Plan</button>
+            <button class="btn" id="manage-plan-btn" style="padding: 12px 24px; font-size: 14px">Manage Plan</button>
           </div>
           <div style="display: flex; flex-direction: column; gap: 16px">
             ${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
               const isActive = ['Monday', 'Wednesday', 'Friday'].includes(day);
               return `
-                <div style="display: flex; align-items: center; gap: 32px; padding: 24px; border: 2px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; border-radius: 20px; background: ${isActive ? 'var(--primary-light)' : 'white'}; transition: transform 0.2s">
+                <div class="schedule-day" data-day="${day}" style="display: flex; align-items: center; gap: 32px; padding: 24px; border: 2px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; border-radius: 20px; background: ${isActive ? 'var(--primary-light)' : 'white'}; transition: transform 0.2s">
                   <div style="width: 120px; font-weight: 900; font-size: 18px; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}">${day}</div>
-                  <div style="flex: 1; font-size: 15px; color: var(--text-muted); font-weight: 600">
+                  <div style="flex: 1; font-size: 15px; color: var(--text-muted); font-weight: 600" class="day-text">
                     ${isActive ? 'React Deep Dive · 2 Modules · 8 PM' : 'Rest or Optional Review'}
                   </div>
-                  ${isActive ? '<span style="font-size: 12px; background: var(--primary); color: white; padding: 6px 12px; border-radius: 12px; font-weight: 900; letter-spacing: 0.05em">FOCUS DAY</span>' : ''}
+                  <div class="day-badge" style="display: ${isActive ? 'block' : 'none'}">
+                    <span style="font-size: 12px; background: var(--primary); color: white; padding: 6px 12px; border-radius: 12px; font-weight: 900; letter-spacing: 0.05em">FOCUS DAY</span>
+                  </div>
                 </div>
               `;
             }).join('')}
@@ -696,6 +831,50 @@ class App {
     `;
 
     el.querySelector('#schedule-back')?.addEventListener('click', () => this.navigate('dashboard'));
+
+    let isManaging = false;
+    const manageBtn = el.querySelector('#manage-plan-btn') as HTMLElement;
+    const dayCards = el.querySelectorAll('.schedule-day');
+
+    manageBtn?.addEventListener('click', () => {
+      isManaging = !isManaging;
+      manageBtn.innerText = isManaging ? 'Save Changes' : 'Manage Plan';
+      manageBtn.style.background = isManaging ? 'var(--accent)' : 'var(--primary)';
+      
+      dayCards.forEach(card => {
+        (card as HTMLElement).style.cursor = isManaging ? 'pointer' : 'default';
+      });
+
+      if (!isManaging) {
+        alert('Your new study plan has been saved! 📅');
+      }
+    });
+
+    dayCards.forEach(card => {
+      card.addEventListener('click', () => {
+        if (!isManaging) return;
+        
+        const cardEl = card as HTMLElement;
+        const isActive = cardEl.style.borderColor === 'var(--primary)';
+        const badge = cardEl.querySelector('.day-badge') as HTMLElement;
+        const text = cardEl.querySelector('.day-text') as HTMLElement;
+        const dayName = cardEl.querySelector('div:first-child') as HTMLElement;
+
+        if (isActive) {
+          cardEl.style.borderColor = 'var(--border)';
+          cardEl.style.background = 'white';
+          badge.style.display = 'none';
+          text.innerText = 'Rest or Optional Review';
+          dayName.style.color = 'var(--text-main)';
+        } else {
+          cardEl.style.borderColor = 'var(--primary)';
+          cardEl.style.background = 'var(--primary-light)';
+          badge.style.display = 'block';
+          text.innerText = 'React Deep Dive · 2 Modules · 8 PM';
+          dayName.style.color = 'var(--primary)';
+        }
+      });
+    });
   }
 
   private renderCourseDetail(el: HTMLElement) {
